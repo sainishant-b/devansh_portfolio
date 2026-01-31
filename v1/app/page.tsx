@@ -1,25 +1,31 @@
-import { FrameSequence } from "@/components/custom/FrameSequence";
+import { ScrollyCanvas } from "@/components/custom/ScrollyCanvas";
+import { Overlay } from "@/components/custom/Overlay";
+import Projects  from "@/components/Projects";
+import Skills from "@/components/Skills";
+import ContactMe from "@/components/ContactMe";
+import AboutMe from "@/components/Aboutme";
 
 export default function Home() {
   return (
-    <main className="min-h-screen">
-      <FrameSequence
-        highlightText="Featured Project"
-        mainText="CREATIVE WORK"
-        textPosition="bottom-left"
-      />
-
-      {/* Additional sections below the pinned component */}
-      <section className="h-screen flex items-center justify-center bg-[#0D0E12]">
-        <div className="text-center">
-          <h2 className="text-4xl md:text-6xl font-bold text-white mb-4">
-            More Content Below
-          </h2>
-          <p className="text-[#EBEBEB]/70 text-lg">
-            Scroll up to see the frame sequence again
-          </p>
-        </div>
+    <main className="relative bg-[#121212]">
+      {/* Scrollytelling Section */}
+      <section className="relative">
+        {/* Canvas-based frame sequence */}
+        <ScrollyCanvas 
+          frameCount={147} 
+          framePath="/sequence/webp"
+          scrollHeight="500vh"
+        />
+        
+        {/* Overlay with parallax text */}
+        <Overlay />
       </section>
+      <AboutMe/>
+      {/* Projects Section */}
+      <Projects />
+
+      {/* Footer / Contact Section */}
+      <ContactMe/>
     </main>
   );
 }

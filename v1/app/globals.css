@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #121212;
+  --foreground: #ededed;
+  --primary-color: #C94C32;
+  --secondary-color: #3A6296;
+  --surface-color: #1F2129;
+  --text-color: #EBEBEB;
 }
 
 @theme inline {
@@ -10,23 +14,39 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;  
-    --foreground: #ededed;
-    --primary-color: #C94C32;
-    --secondary-color: #3A6296;
-    --background-color: #0D0E12;
-    --surface-color: #1F2129;
-    --text-color: #EBEBEB;
-  }
 }
 
 body {
-  background: var(--background);
+  background: #121212;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #121212;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(201, 76, 50, 0.3);
+  color: #ffffff;
 }
