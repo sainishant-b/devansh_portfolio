@@ -12,24 +12,21 @@ const navLinks = [
   { name: "Projects", href: "#projects" },
 ];
 
+declare global {
+  interface Window {
+    lenis?: Lenis;
+  }
+}
+
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [lenis, setLenis] = useState<Lenis | null>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Get Lenis instance from window (set by SmoothScroll component)
   useEffect(() => {
     const checkForLenis = () => {
-      if ((window as any).lenis) {
-        setLenis((window as any).lenis);
+      if (window.lenis) {
+        setLenis(window.lenis);
       }
     };
     

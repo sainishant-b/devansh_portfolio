@@ -32,10 +32,10 @@ export default function AboutMe() {
             
             <div className="relative text-white/70 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
               <p className="mb-6">
-                I'm a passionate developer with expertise in building modern web applications. I specialize in creating clean, efficient, and user-friendly solutions that solve real-world problems. With a strong foundation in both frontend and backend technologies, I enjoy bringing ideas to life through code.
+                I&apos;m a passionate developer with expertise in building modern web applications. I specialize in creating clean, efficient, and user-friendly solutions that solve real-world problems. With a strong foundation in both frontend and backend technologies, I enjoy bringing ideas to life through code.
               </p>
               <p>
-                When I'm not coding, you can find me exploring new technologies, contributing to open-source projects, or continuously learning to stay up-to-date with the ever-evolving tech landscape. I believe in writing maintainable code and creating experiences that users love.
+                When I&apos;m not coding, you can find me exploring new technologies, contributing to open-source projects, or continuously learning to stay up-to-date with the ever-evolving tech landscape. I believe in writing maintainable code and creating experiences that users love.
               </p>
             </div>
           </div>

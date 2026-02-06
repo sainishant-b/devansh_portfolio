@@ -8,6 +8,12 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 // Register GSAP ScrollTrigger
 gsap.registerPlugin(ScrollTrigger);
 
+declare global {
+  interface Window {
+    lenis?: Lenis;
+  }
+}
+
 export function SmoothScroll({
   children,
 }: {
@@ -28,7 +34,7 @@ export function SmoothScroll({
     lenisRef.current = lenis;
     
     // Expose Lenis instance on window for other components
-    (window as any).lenis = lenis;
+    window.lenis = lenis;
 
     // Integrate Lenis with GSAP ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
@@ -43,7 +49,7 @@ export function SmoothScroll({
 
     return () => {
       lenis.destroy();
-      (window as any).lenis = null;
+      window.lenis = undefined;
     };
   }, []);
 

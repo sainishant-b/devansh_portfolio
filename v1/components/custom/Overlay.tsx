@@ -30,7 +30,16 @@ export default function Overlay({ scrollYProgress }: { scrollYProgress: MotionVa
   );
 }
 
-function Section({ children, opacity, y, className = "" }: any) {
+import { ReactNode } from "react";
+
+interface SectionProps {
+  children: ReactNode;
+  opacity: MotionValue<number>;
+  y: MotionValue<number>;
+  className?: string;
+}
+
+function Section({ children, opacity, y, className = "" }: SectionProps) {
     return (
         <motion.div 
             style={{ opacity, y }}

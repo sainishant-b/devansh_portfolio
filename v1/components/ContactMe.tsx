@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from "framer-motion";
-import { Mail, Linkedin, Github } from "lucide-react";
+import { Linkedin, Github } from "lucide-react";
 
 export default function ContactMe() {
   return (
@@ -17,7 +17,7 @@ export default function ContactMe() {
           viewport={{ once: true }}
           className="text-white/40 uppercase tracking-widest text-sm mb-4 block"
         >
-          What's Next?
+          What&apos;s Next?
         </motion.span>
         
         <motion.h2 
@@ -37,7 +37,7 @@ export default function ContactMe() {
            viewport={{ once: true }}
            className="text-white/60 text-lg md:text-xl leading-relaxed max-w-xl mx-auto mb-12"
         >
-          I'm currently looking for new opportunities. Whether you have a question or just want to say hi, I'll try my best to get back to you!
+          I&apos;m currently looking for new opportunities. Whether you have a question or just want to say hi, I&apos;ll try my best to get back to you!
         </motion.p>
 
         <motion.a 
