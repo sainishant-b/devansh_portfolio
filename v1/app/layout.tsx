@@ -27,10 +27,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${inter.variable} font-sans antialiased bg-[#121212] text-white`}
+        className={`${inter.variable} font-sans antialiased bg-[#121212] text-white relative overflow-x-hidden`}
       >
-      <Navbar/>
-        {children}
+        {/* Liquid Glass Background Effects */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-white/[0.02] rounded-full blur-[120px]" />
+          <div className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-white/[0.015] rounded-full blur-[100px]" />
+          <div className="absolute bottom-1/4 left-1/3 w-[600px] h-[600px] bg-white/[0.02] rounded-full blur-[150px]" />
+        </div>
+        
+        <div className="relative z-10">
+          <Navbar/>
+          {children}
+        </div>
       </body>
     </html>
   );
