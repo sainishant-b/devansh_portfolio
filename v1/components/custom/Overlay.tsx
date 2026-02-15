@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from "react";
 import { motion, MotionValue, useTransform } from "framer-motion";
 
 export default function Overlay({ scrollYProgress }: { scrollYProgress: MotionValue<number> }) {
@@ -30,7 +31,14 @@ export default function Overlay({ scrollYProgress }: { scrollYProgress: MotionVa
   );
 }
 
-function Section({ children, opacity, y, className = "" }: any) {
+interface SectionProps {
+    children: ReactNode;
+    opacity: MotionValue<number>;
+    y: MotionValue<number>;
+    className?: string;
+}
+
+function Section({ children, opacity, y, className = "" }: SectionProps) {
     return (
         <motion.div 
             style={{ opacity, y }}

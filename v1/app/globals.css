@@ -18,24 +18,6 @@
   --glass-hover-border: rgba(255, 255, 255, 0.15);
 }
 
-:root.light {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary-color: #F97316;
-  --secondary-color: #3B82F6;
-  --accent-emerald: #059669;
-  --accent-amber: #D97706;
-  --accent-rose: #E11D48;
-  --accent-violet: #7C3AED;
-  --accent-cyan: #0891B2;
-  --surface-color: #ffffff;
-  --text-color: #171717;
-  --glass-bg: rgba(0, 0, 0, 0.03);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-hover-bg: rgba(0, 0, 0, 0.06);
-  --glass-hover-border: rgba(0, 0, 0, 0.12);
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -84,6 +66,7 @@ html, body {
 
 /* Smooth scroll behavior */
 html {
+  position: relative;
   scroll-behavior: smooth;
 }
 
@@ -99,14 +82,6 @@ html {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-}
-
-.light .glass {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 
 .glass-hover {
@@ -134,21 +109,9 @@ html {
   background-color: rgba(255, 255, 255, 0.02);
 }
 
-.light .bg-element {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
 /* Ensure html has proper background */
 html {
   background-color: var(--background);
-}
-
-html.light {
-  background-color: #ffffff;
-}
-
-html:not(.light) {
-  background-color: #0a0a0a;
 }
 
 /* ============================================

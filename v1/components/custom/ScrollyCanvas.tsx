@@ -105,6 +105,7 @@ export function ScrollyCanvas({
           }`}
         >
           {/* Single img element - no key, no remounting */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={imgRef}
             alt="Frame sequence"

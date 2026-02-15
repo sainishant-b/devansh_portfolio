@@ -63,11 +63,11 @@ export default function AboutMe() {
             style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
             className="relative group"
           >
-            {/* Animated Gradient Border on Hover */}
+            {/* Animated Monochrome Border on Hover */}
             <div className={`absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm ${
               isDark 
-                ? 'bg-gradient-to-r from-emerald-500/50 via-amber-500/50 to-rose-500/50' 
-                : 'bg-gradient-to-r from-emerald-400/40 via-amber-400/40 to-rose-400/40'
+                ? 'bg-white/20' 
+                : 'bg-black/12'
             }`} />
             
             {/* Liquid Glass Card */}
@@ -90,10 +90,10 @@ export default function AboutMe() {
               
               {/* Decorative corners */}
               <div className={`absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 rounded-tl-md transition-colors duration-300 ${
-                isDark ? 'border-emerald-500/40 group-hover:border-emerald-400/60' : 'border-emerald-400/40 group-hover:border-emerald-500/60'
+                isDark ? 'border-white/25 group-hover:border-white/45' : 'border-black/25 group-hover:border-black/45'
               }`} />
               <div className={`absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 rounded-br-md transition-colors duration-300 ${
-                isDark ? 'border-rose-500/40 group-hover:border-rose-400/60' : 'border-rose-400/40 group-hover:border-rose-500/60'
+                isDark ? 'border-white/25 group-hover:border-white/45' : 'border-black/25 group-hover:border-black/45'
               }`} />
               
               {/* Staggered text paragraphs */}

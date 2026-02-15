@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Menu, X, Sun, Moon } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Lenis from "lenis";
 import { useTheme } from "./ThemeProvider";
 
@@ -11,8 +11,9 @@ const navLinks = [
   { name: "About", href: "#about" },
   { name: "Skills", href: "#skills" },
   { name: "Projects", href: "#projects" },
-  { name: "Contact", href: "#contact" },
 ];
+const contactLink = { name: "Contact", href: "#contact" };
+const allNavLinks = [...navLinks, contactLink];
 
 declare global {
   interface Window {
@@ -40,28 +41,8 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState<string>("");
   const [scrolled, setScrolled] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-
-  // Magnetic button effect for theme toggle
-  const magneticX = useMotionValue(0);
-  const magneticY = useMotionValue(0);
-  const springX = useSpring(magneticX, { damping: 20, stiffness: 300 });
-  const springY = useSpring(magneticY, { damping: 20, stiffness: 300 });
-
-  const handleMagneticMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    magneticX.set((e.clientX - centerX) * 0.3);
-    magneticY.set((e.clientY - centerY) * 0.3);
-  };
-
-  const handleMagneticLeave = () => {
-    magneticX.set(0);
-    magneticY.set(0);
-  };
 
   // Get Lenis instance from window (set by SmoothScroll component)
   useEffect(() => {
@@ -83,7 +64,7 @@ export default function Navbar() {
       setScrolled(window.scrollY > 50);
       
       // Find active section
-      const sections = navLinks.map(link => ({
+      const sections = allNavLinks.map(link => ({
         id: link.href.slice(1),
         el: document.querySelector(link.href)
       }));
@@ -130,24 +111,6 @@ export default function Navbar() {
     }
   }, [lenis]);
 
-  // Calculate hover indicator position
-  const getIndicatorStyle = () => {
-    const idx = hoveredIndex !== null ? hoveredIndex : navLinks.findIndex(l => l.href === `#${activeSection}`);
-    if (idx < 0 || !navRefs.current[idx]) return { opacity: 0, left: 0, width: 0 };
-    const el = navRefs.current[idx];
-    const parent = el?.parentElement;
-    if (!el || !parent) return { opacity: 0, left: 0, width: 0 };
-    const parentRect = parent.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    return {
-      opacity: 1,
-      left: elRect.left - parentRect.left,
-      width: elRect.width,
-    };
-  };
-
-  const indicatorStyle = getIndicatorStyle();
-
   return (
     <motion.nav
       initial={{ y: -100, opacity: 0 }}
@@ -165,7 +128,7 @@ export default function Navbar() {
           >
             <motion.span 
               className={`text-sm font-bold tracking-[0.2em] uppercase transition-colors duration-300 flex items-center gap-1.5 ${
-                isDark ? 'text-white/70 group-hover:text-white' : 'text-black group-hover:text-gray-900'
+                isDark ? 'text-white/90 group-hover:text-white' : 'text-black group-hover:text-gray-900'
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -179,29 +142,14 @@ export default function Navbar() {
             <motion.div 
               className={`relative flex items-center rounded-full px-2 py-1.5 backdrop-blur-xl transition-all duration-500 ${
                 isDark 
-                  ? `${scrolled ? 'bg-white/[0.08]' : 'bg-white/[0.05]'} shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/[0.1]` 
+                  ? `${scrolled ? 'bg-white/[0.14]' : 'bg-white/[0.1]'} shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/[0.2]` 
                   : `${scrolled ? 'bg-white/80' : 'bg-white/60'} shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/50 backdrop-blur-xl`
               }`}
               layout
             >
-              {/* Sliding highlight indicator */}
-              <motion.div
-                className={`absolute top-1.5 bottom-1.5 rounded-full ${
-                  isDark ? 'bg-white/[0.1]' : 'bg-black/[0.08]'
-                }`}
-                animate={{
-                  left: indicatorStyle.left,
-                  width: indicatorStyle.width,
-                  opacity: indicatorStyle.opacity,
-                }}
-                transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                style={{ height: 'calc(100% - 12px)' }}
-              />
-
               {navLinks.map((link, index) => (
                 <motion.a
                   key={link.name}
-                  ref={(el) => { navRefs.current[index] = el; }}
                   href={link.href}
                   onClick={(e) => handleNavClick(e, link.href)}
                   onMouseEnter={() => setHoveredIndex(index)}
@@ -210,66 +158,51 @@ export default function Navbar() {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.4 + index * 0.08 }}
-                  className={`relative px-5 py-2 text-xs font-bold tracking-wider rounded-full cursor-pointer transition-colors duration-200 z-10 ${
-                    activeSection === link.href.slice(1)
+                  className={`relative px-5 py-2 text-xs font-bold tracking-wider rounded-full cursor-pointer transition-colors duration-200 ${
+                    (hoveredIndex === index || (hoveredIndex === null && activeSection === link.href.slice(1)))
                       ? isDark ? 'text-white' : 'text-black'
                       : isDark 
-                        ? 'text-white/50 hover:text-white' 
+                        ? 'text-white/75 hover:text-white' 
                         : 'text-black/50 hover:text-black'
                   }`}
                   whileTap={{ scale: 0.92 }}
                 >
-                  <RollingText>{link.name}</RollingText>
+                  {(hoveredIndex === index || (hoveredIndex === null && activeSection === link.href.slice(1))) && (
+                    <motion.span
+                      layoutId="desktop-nav-highlight"
+                      className={`absolute top-1.5 bottom-1.5 left-1 right-1 rounded-full ${
+                        isDark ? 'bg-white/[0.2]' : 'bg-black/[0.08]'
+                      }`}
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">
+                    <RollingText>{link.name}</RollingText>
+                  </span>
                 </motion.a>
               ))}
             </motion.div>
           </div>
 
-          {/* Theme Toggle (magnetic) + Mobile Menu Button - Right */}
+          {/* Contact Button + Mobile Menu Button - Right */}
           <div className="absolute right-0 flex items-center gap-2">
-            {/* Theme Toggle with magnetic effect */}
-            <motion.button
-              onClick={toggleTheme}
-              onMouseMove={handleMagneticMove}
-              onMouseLeave={handleMagneticLeave}
-              style={{ x: springX, y: springY }}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className={`p-2.5 rounded-full backdrop-blur-xl border transition-all duration-300 ${
-                isDark 
-                  ? `${scrolled ? 'bg-white/[0.08]' : 'bg-white/[0.05]'} border-white/[0.1] hover:border-white/[0.2]` 
-                : `${scrolled ? 'bg-white/80' : 'bg-white/60'} border-white/50 hover:border-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.1)]`
+            <motion.a
+              href={contactLink.href}
+              onClick={(e) => handleNavClick(e, contactLink.href)}
+              className={`hidden md:inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold tracking-wider rounded-full backdrop-blur-xl bg-black transition-all duration-300 ${
+                activeSection === contactLink.href.slice(1)
+                  ? 'text-red-400'
+                  : 'text-red-500 hover:text-red-400'
               }`}
-              aria-label="Toggle theme"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <AnimatePresence mode="wait">
-                {isDark ? (
-                  <motion.div
-                    key="sun"
-                    initial={{ rotate: -90, scale: 0, opacity: 0 }}
-                    animate={{ rotate: 0, scale: 1, opacity: 1 }}
-                    exit={{ rotate: 90, scale: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <Sun size={18} className="text-white" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="moon"
-                    initial={{ rotate: 90, scale: 0, opacity: 0 }}
-                    animate={{ rotate: 0, scale: 1, opacity: 1 }}
-                    exit={{ rotate: -90, scale: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    <Moon size={18} className="text-gray-900" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
+              <RollingText>Contact</RollingText>
+            </motion.a>
 
             {/* Mobile Menu Button with morphing animation */}
             <motion.button
-              className={`md:hidden z-50 p-2 ${isDark ? 'text-[#b8c5b9]' : 'text-black font-bold'}`}
+              className={`md:hidden z-50 p-2 ${isDark ? 'text-white/90' : 'text-black font-bold'}`}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -317,7 +250,7 @@ export default function Navbar() {
             }`}
           >
             <div className="flex flex-col p-4 space-y-2">
-              {navLinks.map((link, index) => (
+              {allNavLinks.map((link, index) => (
                 <motion.div
                   key={link.name}
                   initial={{ opacity: 0, x: -30 }}
@@ -329,9 +262,9 @@ export default function Navbar() {
                     onClick={(e) => handleNavClick(e, link.href)}
                     className={`block px-4 py-3 text-sm font-bold tracking-wider rounded-xl transition-all duration-300 cursor-pointer ${
                       activeSection === link.href.slice(1)
-                        ? isDark ? 'text-white bg-white/[0.08]' : 'text-black bg-black/[0.08]'
+                        ? isDark ? 'text-white bg-white/[0.14]' : 'text-black bg-black/[0.08]'
                         : isDark 
-                          ? 'text-white/60 hover:text-white hover:bg-white/[0.08]' 
+                          ? 'text-white/80 hover:text-white hover:bg-white/[0.12]' 
                           : 'text-black hover:text-black hover:bg-black/[0.1]'
                     }`}
                   >
@@ -348,38 +281,6 @@ export default function Navbar() {
                   </a>
                 </motion.div>
               ))}
-              
-              {/* Mobile Theme Toggle */}
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: navLinks.length * 0.08, ease: "easeOut" }}
-                className={`pt-3 mt-2 border-t ${isDark ? 'border-white/[0.08]' : 'border-black/[0.08]'}`}
-              >
-                <button
-                  onClick={() => {
-                    toggleTheme();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`flex items-center justify-center gap-3 w-full px-4 py-3 text-sm font-medium tracking-wider rounded-xl transition-all duration-300 ${
-                    isDark 
-                      ? 'text-white bg-white/[0.1] hover:bg-white/[0.15]' 
-                      : 'text-gray-900 bg-black/[0.05] hover:bg-black/[0.08]'
-                  }`}
-                >
-                  {isDark ? (
-                    <>
-                      <Sun size={18} className="text-yellow-400" />
-                      <span>Switch to Light</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon size={18} className="text-blue-600" />
-                      <span>Switch to Dark</span>
-                    </>
-                  )}
-                </button>
-              </motion.div>
             </div>
           </motion.div>
         )}

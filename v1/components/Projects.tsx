@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Project } from "@/lib/projects";
-import { ChevronLeft, ChevronRight, X, Github, ExternalLink, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Github, ExternalLink } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { AnimatePresence } from "framer-motion";
 
@@ -182,7 +182,7 @@ export default function Projects({ projects }: ProjectsProps) {
             scrollbarWidth: 'none'
           }}
         >
-          {projects.map((project, index) => (
+          {projects.map((project) => (
             <motion.div
               key={project.slug}
               layoutId={`project-card-${project.slug}`}
