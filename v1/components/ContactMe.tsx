@@ -1,23 +1,13 @@
 'use client';
 
 import { motion, useMotionValue, useSpring } from "framer-motion";
-import { Linkedin, Github, Mail, Copy, Check } from "lucide-react";
+import { Linkedin, Github } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 
 export default function ContactMe() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-  const [emailCopied, setEmailCopied] = useState(false);
-  const [showEmail, setShowEmail] = useState(false);
-  
-  const email = "devansh@example.com";
-
-  const copyEmail = () => {
-    navigator.clipboard.writeText(email);
-    setEmailCopied(true);
-    setTimeout(() => setEmailCopied(false), 2000);
-  };
 
   return (
     <section id="contact" className="min-h-[60vh] w-full py-20 px-5 md:px-10 flex flex-col items-center justify-center relative overflow-hidden">
@@ -72,51 +62,6 @@ export default function ContactMe() {
         >
           I&apos;m currently looking for new opportunities. Whether you have a question or just want to say hi, I&apos;ll try my best to get back to you!
         </motion.p>
-
-        {/* Email reveal section */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          viewport={{ once: true }}
-          className="mb-10"
-        >
-          {!showEmail ? (
-            <button
-              onClick={() => setShowEmail(true)}
-              className={`inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-xl transition-all duration-300 ${
-                isDark 
-                  ? 'text-white/60 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] hover:border-white/[0.2]' 
-                  : 'text-gray-900 bg-white/60 hover:bg-white/80 border border-white/50 hover:border-white/80 shadow-md backdrop-blur-sm'
-              }`}
-            >
-              <Mail className="w-4 h-4" />
-              Reveal Email
-            </button>
-          ) : (
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="inline-flex items-center gap-3"
-            >
-              <span className={`font-mono text-lg px-4 py-2 rounded-lg ${
-                isDark ? 'text-white/80 bg-white/[0.05]' : 'text-gray-800 bg-black/[0.05]'
-              }`}>
-                {email}
-              </span>
-              <button
-                onClick={copyEmail}
-                className={`p-2.5 rounded-xl transition-all duration-300 ${
-                  isDark 
-                    ? 'hover:bg-white/[0.1] text-white/60 hover:text-white border border-white/[0.1]' 
-                    : 'bg-white/60 hover:bg-white/80 text-gray-900 border border-white/50 hover:border-white/80 shadow-sm backdrop-blur-sm'
-                }`}
-              >
-                {emailCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </motion.div>
-          )}
-        </motion.div>
 
         {/* Magnetic Button */}
         <MagneticButton isDark={isDark} />
@@ -177,19 +122,19 @@ function MagneticButton({ isDark }: { isDark: boolean }) {
     <div
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="inline-block p-8"
+      className="inline-block"
     >
       <motion.a 
         ref={buttonRef}
         href="mailto:devansh@example.com"
-        style={{ x, y }}
+        style={{ x, y, WebkitTapHighlightColor: "transparent" }}
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         transition={{ duration: 0.3 }}
         viewport={{ once: true }}
-        className="relative inline-block overflow-hidden group"
+        className="relative inline-block overflow-hidden group rounded-full focus:outline-none focus-visible:outline-none"
       >
         {/* Glow effect */}
         <div className={`absolute -inset-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl ${

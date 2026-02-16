@@ -1,11 +1,10 @@
 'use client';
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Project } from "@/lib/projects";
 import { ChevronLeft, ChevronRight, X, Github, ExternalLink } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
-import { AnimatePresence } from "framer-motion";
 
 interface ProjectsProps {
   projects: Project[];
@@ -15,15 +14,12 @@ export default function Projects({ projects }: ProjectsProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isScrolling, setIsScrolling] = useState(false);
+  const [activeSlide, setActiveSlide] = useState(0);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const shouldReduceMotion = useReducedMotion();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
-
-  const getCardWidth = useCallback(() => {
-    if (typeof window === 'undefined') return 500;
-    return window.innerWidth >= 768 ? 524 : 374; // card width + gap
-  }, []);
+  const totalSlides = projects.length + 1;
 
   const checkScrollability = useCallback(() => {
     if (scrollContainerRef.current) {
@@ -33,50 +29,124 @@ export default function Projects({ projects }: ProjectsProps) {
     }
   }, []);
 
+  const updateActiveSlide = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const slides = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-slide-index]')
+    );
+    if (slides.length === 0) return;
+
+    const center = container.scrollLeft + container.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    for (const slide of slides) {
+      const slideIndex = Number(slide.dataset.slideIndex ?? -1);
+      if (Number.isNaN(slideIndex) || slideIndex < 0) continue;
+
+      const slideCenter = slide.offsetLeft + slide.clientWidth / 2;
+      const distance = Math.abs(slideCenter - center);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = slideIndex;
+      }
+    }
+
+    setActiveSlide((prev) => (prev === closestIndex ? prev : closestIndex));
+  }, []);
+
+  const scrollToSlide = useCallback((slideIndex: number) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const clampedIndex = Math.max(0, Math.min(totalSlides - 1, slideIndex));
+    const slide = container.querySelector<HTMLElement>(`[data-slide-index="${clampedIndex}"]`);
+    if (!slide) return;
+
+    const centeredLeft = slide.offsetLeft - (container.clientWidth - slide.clientWidth) / 2;
+    const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+    const targetLeft = Math.max(0, Math.min(centeredLeft, maxScrollLeft));
+
+    container.scrollTo({ left: targetLeft, behavior: 'smooth' });
+  }, [totalSlides]);
+
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (container) {
-      // Use requestAnimationFrame for smoother scroll detection
-      let ticking = false;
-      const handleScroll = () => {
-        if (!ticking) {
-          window.requestAnimationFrame(() => {
-            checkScrollability();
-            ticking = false;
-          });
-          ticking = true;
-        }
-      };
-      
-      container.addEventListener('scroll', handleScroll, { passive: true });
+    if (!container) return;
+
+    let frame = 0;
+    const handleScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        checkScrollability();
+        updateActiveSlide();
+        frame = 0;
+      });
+    };
+
+    const handleResize = () => {
       checkScrollability();
-      
-      return () => container.removeEventListener('scroll', handleScroll);
+      updateActiveSlide();
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
+    handleResize();
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+    };
+  }, [checkScrollability, updateActiveSlide]);
+
+  const scrollLeft = useCallback(() => {
+    scrollToSlide(activeSlide - 1);
+  }, [activeSlide, scrollToSlide]);
+
+  const scrollRight = useCallback(() => {
+    scrollToSlide(activeSlide + 1);
+  }, [activeSlide, scrollToSlide]);
+  const openProject = useCallback((project: Project) => {
+    setSelectedProject(project);
+  }, []);
+  const closeProject = useCallback(() => {
+    setSelectedProject(null);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProject) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
-  }, [checkScrollability]);
+    document.body.style.overflow = 'hidden';
+    window.lenis?.stop?.();
 
-  const scrollTo = useCallback((direction: 'left' | 'right') => {
-    if (isScrolling || !scrollContainerRef.current) return;
-    
-    setIsScrolling(true);
-    const cardWidth = getCardWidth();
-    const container = scrollContainerRef.current;
-    const currentScroll = container.scrollLeft;
-    const targetScroll = direction === 'left' 
-      ? currentScroll - cardWidth 
-      : currentScroll + cardWidth;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' || event.key === 'Esc' || event.code === 'Escape') {
+        event.preventDefault();
+        closeProject();
+      }
+    };
 
-    container.scrollTo({
-      left: targetScroll,
-      behavior: 'smooth'
-    });
+    window.addEventListener('keydown', handleKeyDown);
 
-    // Reset scrolling state after animation
-    setTimeout(() => setIsScrolling(false), 500);
-  }, [isScrolling, getCardWidth]);
-
-  const scrollLeft = () => scrollTo('left');
-  const scrollRight = () => scrollTo('right');
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.paddingRight = previousBodyPaddingRight;
+      window.lenis?.start?.();
+    };
+  }, [selectedProject, closeProject]);
 
   if (projects.length === 0) {
     return (
@@ -131,7 +201,7 @@ export default function Projects({ projects }: ProjectsProps) {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: canScrollLeft ? 1 : 0, x: canScrollLeft ? 0 : -20 }}
           onClick={scrollLeft}
-          disabled={!canScrollLeft || isScrolling}
+          disabled={!canScrollLeft}
           className={`absolute left-2 md:left-8 top-[150px] md:top-[175px] -translate-y-1/2 z-20 p-3 md:p-4 rounded-full 
             backdrop-blur-md
             transition-all duration-300 ease-out
@@ -153,7 +223,7 @@ export default function Projects({ projects }: ProjectsProps) {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: canScrollRight ? 1 : 0, x: canScrollRight ? 0 : 20 }}
           onClick={scrollRight}
-          disabled={!canScrollRight || isScrolling}
+          disabled={!canScrollRight}
           className={`absolute right-2 md:right-8 top-[150px] md:top-[175px] -translate-y-1/2 z-20 p-3 md:p-4 rounded-full 
             backdrop-blur-md
             transition-all duration-300 ease-out
@@ -182,11 +252,11 @@ export default function Projects({ projects }: ProjectsProps) {
             scrollbarWidth: 'none'
           }}
         >
-          {projects.map((project) => (
+          {projects.map((project, index) => (
             <motion.div
               key={project.slug}
-              layoutId={`project-card-${project.slug}`}
-              onClick={() => setSelectedProject(project)}
+              data-slide-index={index}
+              onClick={() => openProject(project)}
               className="group/card relative flex-shrink-0 w-[85vw] md:w-[500px] h-[300px] md:h-[350px] rounded-2xl overflow-hidden snap-center transition-all duration-500 hover:scale-[1.02] cursor-pointer"
               style={{ scrollSnapAlign: 'center' }}
             >
@@ -258,6 +328,7 @@ export default function Projects({ projects }: ProjectsProps) {
           
           {/* Project Coming Soon Title Card - At the End */}
           <motion.div
+            data-slide-index={projects.length}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0 }}
@@ -348,50 +419,73 @@ export default function Projects({ projects }: ProjectsProps) {
           <div className="flex-shrink-0 w-5 md:w-20" />
         </div>
 
-        {/* Scroll Indicator */}
-        <div className="flex justify-center gap-2 mt-4">
-          {projects.map((_, index) => (
-            <div
-              key={index}
-              className={`h-1 rounded-full transition-all duration-300 ${isDark ? 'bg-white/20' : 'bg-black/20'}`}
-              style={{ width: '20px' }}
-            />
-          ))}
-          {/* Dot for Coming Soon card at the end */}
-          <div className={`h-1 rounded-full transition-all duration-300 ${
-            isDark 
-              ? 'bg-gradient-to-r from-purple-500/50 to-pink-500/50' 
-              : 'bg-gradient-to-r from-purple-500/30 to-pink-500/30'
-          }`} style={{ width: '20px' }} />
+        {/* Scroll Indicator / Slider Controls */}
+        <div className="flex justify-center gap-2 mt-4" role="group" aria-label="Project carousel slider">
+          {Array.from({ length: totalSlides }).map((_, index) => {
+            const isActive = index === activeSlide;
+
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => scrollToSlide(index)}
+                aria-label={`Go to project slide ${index + 1}`}
+                aria-pressed={isActive}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  isActive
+                    ? `w-10 ${isDark ? 'bg-white/80' : 'bg-black/70'}`
+                    : `w-5 ${isDark ? 'bg-white/20 hover:bg-white/35' : 'bg-black/20 hover:bg-black/35'}`
+                }`}
+              />
+            );
+          })}
         </div>
       </div>
 
       {/* Project Modal */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait" initial={false}>
         {selectedProject && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+          <motion.div
+            key={selectedProject.slug}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
+          >
             {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedProject(null)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            <button
+              type="button"
+              aria-label="Close project modal"
+              onClick={closeProject}
+              className="absolute inset-0 bg-black/65 backdrop-blur-sm"
             />
 
             {/* Modal Content */}
             <motion.div
-              layoutId={`project-card-${selectedProject.slug}`}
-              className={`relative w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl flex flex-col md:flex-row ${
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20, scale: shouldReduceMotion ? 1 : 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: shouldReduceMotion ? 0 : 10, scale: shouldReduceMotion ? 1 : 0.99 }}
+              transition={{
+                type: 'spring',
+                stiffness: 320,
+                damping: 34,
+                mass: 0.7,
+              }}
+              onClick={(event) => event.stopPropagation()}
+              style={{ willChange: 'transform, opacity' }}
+              className={`relative w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-3xl shadow-2xl flex flex-col md:flex-row transform-gpu ${
                 isDark ? 'bg-[#0a0a0a] border border-white/10' : 'bg-white border border-black/10'
               }`}
             >
               {/* Close Button */}
               <button
-                onClick={() => setSelectedProject(null)}
+                type="button"
+                aria-label="Close popup"
+                onClick={closeProject}
                 className={`absolute top-4 right-4 z-50 p-2 rounded-full transition-colors ${
-                  isDark 
-                    ? 'bg-black/50 text-white hover:bg-white/20' 
+                  isDark
+                    ? 'bg-black/50 text-white hover:bg-white/20'
                     : 'bg-white/50 text-black hover:bg-black/10'
                 }`}
               >
@@ -402,13 +496,15 @@ export default function Projects({ projects }: ProjectsProps) {
               <div className="w-full md:w-3/5 h-[40vh] md:h-auto relative bg-black flex items-center justify-center overflow-hidden">
                 {selectedProject.video ? (
                   <div className="relative w-full h-full">
-                     <iframe 
-                       src={selectedProject.video} 
-                       className="w-full h-full absolute inset-0" 
-                       allow="autoplay; encrypted-media" 
-                       allowFullScreen 
-                       title={selectedProject.title}
-                     />
+                    <iframe
+                      src={selectedProject.video}
+                      className="w-full h-full absolute inset-0"
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="strict-origin-when-cross-origin"
+                      title={selectedProject.title}
+                    />
                   </div>
                 ) : (
                   <motion.img
@@ -417,37 +513,37 @@ export default function Projects({ projects }: ProjectsProps) {
                     className="w-full h-full object-cover"
                   />
                 )}
-                
+
                 {/* Overlay Gradient on image/video */}
                 <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
               </div>
 
               {/* Details Section (Right/Bottom) */}
-              <div className={`w-full md:w-2/5 p-8 md:p-12 flex flex-col overflow-y-auto ${
+              <div className={`w-full md:w-2/5 p-8 md:p-12 flex flex-col overflow-y-auto overscroll-contain ${
                 isDark ? 'text-white' : 'text-gray-900'
               }`}>
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: shouldReduceMotion ? 0 : 0.08, duration: shouldReduceMotion ? 0 : 0.2 }}
                 >
                   <span className={`text-xs font-bold tracking-widest uppercase mb-3 block ${
                     isDark ? 'text-violet-400' : 'text-violet-600'
                   }`}>
                     {selectedProject.category}
                   </span>
-                  
+
                   <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
                     {selectedProject.title}
                   </h2>
-                  
+
                   <div className="flex flex-wrap gap-2 mb-8">
                     {selectedProject.tags?.map((tag) => (
-                      <span 
-                        key={tag} 
+                      <span
+                        key={tag}
                         className={`text-xs px-3 py-1.5 rounded-full font-medium ${
-                          isDark 
-                            ? 'bg-white/10 text-white/80 border border-white/10' 
+                          isDark
+                            ? 'bg-white/10 text-white/80 border border-white/10'
                             : 'bg-black/5 text-gray-700 border border-black/5'
                         }`}
                       >
@@ -465,7 +561,7 @@ export default function Projects({ projects }: ProjectsProps) {
                   <div className="flex flex-col gap-4 mt-auto">
                     {/* View Project Button */}
                     {selectedProject.link && (
-                      <a 
+                      <a
                         href={selectedProject.link}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -479,10 +575,10 @@ export default function Projects({ projects }: ProjectsProps) {
                         <ExternalLink size={18} className="group-hover:translate-x-1 transition-transform" />
                       </a>
                     )}
-                    
+
                     {/* GitHub Button */}
                     {selectedProject.github && (
-                      <a 
+                      <a
                         href={selectedProject.github}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -500,9 +596,10 @@ export default function Projects({ projects }: ProjectsProps) {
                 </motion.div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </section>
   );
 }
+
