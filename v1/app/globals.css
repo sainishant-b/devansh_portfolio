@@ -206,11 +206,42 @@ html {
   66% { filter: hue-rotate(-15deg) blur(55px); }
 }
 
+@keyframes cardSurfacePulse {
+  0%, 100% { opacity: 0.92; filter: brightness(1); }
+  50% { opacity: 1; filter: brightness(1.06); }
+}
+
+@keyframes cardSheenLoop {
+  0% { transform: translateX(-135%); opacity: 0; }
+  14% { opacity: 0.22; }
+  38% { opacity: 0.14; }
+  100% { transform: translateX(135%); opacity: 0; }
+}
+
+@keyframes chipSoftPulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04); }
+  50% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); }
+}
+
 /* Utility Classes */
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-float-slow { animation: float 8s ease-in-out infinite; }
 .animate-float-diagonal { animation: floatDiagonal 10s ease-in-out infinite; }
 .animate-pulse-slow { animation: pulse 3s ease-in-out infinite; }
+
+.card-surface-pulse {
+  animation: cardSurfacePulse 4.8s ease-in-out infinite;
+  will-change: opacity, filter;
+}
+
+.card-sheen-loop {
+  animation: cardSheenLoop 6.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.card-chip-pulse {
+  animation: chipSoftPulse 3.4s ease-in-out infinite;
+}
 
 .shimmer-effect { position: relative; overflow: hidden; }
 .shimmer-effect::before {
@@ -222,4 +253,59 @@ html {
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
   animation: shimmer 2s infinite;
+}
+
+/* About heading aurora color shift */
+.about-heading-aurora {
+  --about-clr-1: #00c2ff;
+  --about-clr-2: #33ff8c;
+  --about-clr-3: #ffc640;
+  --about-clr-4: #e54cff;
+  position: relative;
+  display: inline-block;
+  overflow: visible;
+  isolation: auto;
+}
+
+.about-heading-aurora__text {
+  position: relative;
+  z-index: 3;
+  color: transparent;
+  background-image: linear-gradient(
+    120deg,
+    var(--about-clr-1) 0%,
+    var(--about-clr-2) 24%,
+    var(--about-clr-3) 52%,
+    var(--about-clr-4) 78%,
+    var(--about-clr-1) 100%
+  );
+  background-size: 220% 220%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: about-aurora-text-flow 9s ease-in-out infinite;
+}
+
+.about-heading-aurora--dark .about-heading-aurora__text {
+  text-shadow: none;
+}
+
+.about-heading-aurora--light .about-heading-aurora__text {
+  filter: saturate(0.88) contrast(1.04);
+}
+
+@keyframes about-aurora-text-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-surface-pulse,
+  .card-sheen-loop,
+  .card-chip-pulse,
+  .about-heading-aurora__text {
+    animation: none !important;
+  }
 }

@@ -1,7 +1,7 @@
 import { SmoothScroll } from "@/components/custom/SmoothScroll";
 import { ScrollyCanvas } from "@/components/custom/ScrollyCanvas";
 import ProjectsSection from "./sections/ProjectsSection";
-import Skills from "@/components/Skills";
+import Expertise from "@/components/Expertise";
 import ContactMe from "@/components/ContactMe";
 import AboutMe from "@/components/Aboutme";
 
@@ -24,7 +24,7 @@ export default function Home() {
         </div>
 
         <div>
-          <Skills />
+          <Expertise />
         </div>
 
         {/* Projects Section */}

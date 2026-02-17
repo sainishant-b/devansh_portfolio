@@ -10,6 +10,11 @@ const PARTICLE_RADIUS = 1.4;      // dot size
 const JITTER = 6;                 // max random offset from grid
 const REPULSE_RADIUS = 120;       // cursor influence radius
 const REPULSE_STRENGTH = 8;       // how hard particles push away
+const PURPLE_HOVER_RADIUS = 190;  // purple glow influence radius
+const PURPLE_RGB_DARK = '167,139,250';
+const PURPLE_RGB_LIGHT = '109,40,217';
+const PURPLE_HOVER_ALPHA_DARK = 0.46;
+const PURPLE_HOVER_ALPHA_LIGHT = 0.28;
 const RETURN_SPEED = 0.06;        // lerp speed back to origin (0–1)
 const FRICTION = 0.88;            // velocity damping
 
@@ -97,6 +102,7 @@ export default function ParticleGrid() {
       const mx = mouseRef.current.x;
       const my = mouseRef.current.y;
       const r2 = REPULSE_RADIUS * REPULSE_RADIUS;
+      const purpleR2 = PURPLE_HOVER_RADIUS * PURPLE_HOVER_RADIUS;
 
       // Clear
       ctx.fillStyle = isDark ? '#0a0a0a' : '#ffffff';
@@ -145,6 +151,31 @@ export default function ParticleGrid() {
       }
 
       ctx.fill();
+
+      // Subtle premium-purple accent around cursor
+      if (mx > -1000 && my > -1000) {
+        const purpleRGB = isDark ? PURPLE_RGB_DARK : PURPLE_RGB_LIGHT;
+        const maxAlpha = isDark ? PURPLE_HOVER_ALPHA_DARK : PURPLE_HOVER_ALPHA_LIGHT;
+
+        for (let i = 0; i < len; i++) {
+          const p = particles[i];
+          const dx = p.x - mx;
+          const dy = p.y - my;
+          const dist2 = dx * dx + dy * dy;
+
+          if (dist2 >= purpleR2 || dist2 <= 0) continue;
+
+          const dist = Math.sqrt(dist2);
+          const intensity = 1 - dist / PURPLE_HOVER_RADIUS;
+          const alpha = maxAlpha * intensity * intensity;
+          if (alpha < 0.015) continue;
+
+          ctx.fillStyle = `rgba(${purpleRGB},${alpha.toFixed(3)})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, PARTICLE_RADIUS + intensity * 0.65, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
 
       rafRef.current = requestAnimationFrame(tick);
     };

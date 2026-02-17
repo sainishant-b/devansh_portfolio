@@ -33,19 +33,25 @@ export default function AboutMe() {
 
   return (
     <section className="min-h-[50vh] w-full py-20 px-5 md:px-10 flex items-center justify-center relative overflow-hidden">
-
-
-      
       <div className="max-w-4xl mx-auto text-center relative">
         <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             id="about"
-            className={`text-4xl md:text-5xl font-bold mb-8 tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
+            style={{ fontFamily: "var(--font-gravitas-one)" }}
+            className={`text-4xl md:text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
         >
-          About Me
+          <span className={`about-heading-aurora ${isDark ? "about-heading-aurora--dark" : "about-heading-aurora--light"}`}>
+            <span className="about-heading-aurora__text">About Me</span>
+          </span>
         </motion.h2>
+        <motion.div
+          initial={{ scaleX: 0 }}
+          whileInView={{ scaleX: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className={`w-16 h-px mx-auto mt-6 mb-8 ${isDark ? 'bg-white/30' : 'bg-black/30'}`}
+        />
 
         <motion.div
            initial={{ opacity: 0, y: 20 }}
@@ -76,6 +82,18 @@ export default function AboutMe() {
                 ? 'bg-white/[0.04] border border-white/[0.1] shadow-[0_8px_32px_rgba(0,0,0,0.36)] group-hover:bg-white/[0.06] group-hover:border-white/[0.15]' 
                 : 'bg-black/[0.03] border border-black/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.1)] group-hover:bg-black/[0.05] group-hover:border-black/[0.12]'
             }`}>
+              {/* Silver tint in the box background */}
+              <div
+                className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${
+                  isDark ? 'opacity-75 group-hover:opacity-90' : 'opacity-90 group-hover:opacity-100'
+                }`}
+                style={{
+                  background: isDark
+                    ? "linear-gradient(140deg, rgba(226,232,240,0.14) 0%, rgba(148,163,184,0.09) 42%, rgba(100,116,139,0.05) 100%)"
+                    : "linear-gradient(140deg, rgba(255,255,255,0.96) 0%, rgba(226,232,240,0.86) 44%, rgba(203,213,225,0.74) 100%)",
+                }}
+              />
+
               {/* Shimmer effect */}
               <div className={`absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none ${
                 isDark ? 'bg-gradient-to-r from-transparent via-white/5 to-transparent' : 'bg-gradient-to-r from-transparent via-black/5 to-transparent'
@@ -97,7 +115,10 @@ export default function AboutMe() {
               }`} />
               
               {/* Staggered text paragraphs */}
-              <div className={`relative text-lg md:text-xl leading-relaxed max-w-2xl mx-auto ${isDark ? 'text-white/70' : 'text-gray-700'}`} style={{ transform: 'translateZ(30px)' }}>
+              <div
+                className={`relative text-lg md:text-xl leading-relaxed max-w-2xl mx-auto font-semibold tracking-tight ${isDark ? 'text-white/70' : 'text-gray-700'}`}
+                style={{ transform: 'translateZ(30px)', fontFamily: "var(--font-poppins)" }}
+              >
                 <motion.p 
                   className="mb-6"
                   initial={{ opacity: 0, y: 15 }}
@@ -105,7 +126,7 @@ export default function AboutMe() {
                   transition={{ duration: 0.5, delay: 0.3 }}
                   viewport={{ once: true }}
                 >
-                  I&apos;m a passionate developer with expertise in building modern web applications. I specialize in creating clean, efficient, and user-friendly solutions that solve real-world problems. With a strong foundation in both frontend and backend technologies, I enjoy bringing ideas to life through code.
+                  I design and build AI systems that solve practical business problems. My core work includes end-to-end workflow automation, AI-first websites with embedded intelligence, custom LLM tools, and technical due diligence to validate correctness, security, and scalability.
                 </motion.p>
                 <motion.p
                   initial={{ opacity: 0, y: 15 }}
@@ -113,7 +134,7 @@ export default function AboutMe() {
                   transition={{ duration: 0.5, delay: 0.5 }}
                   viewport={{ once: true }}
                 >
-                  When I&apos;m not coding, you can find me exploring new technologies, contributing to open-source projects, or continuously learning to stay up-to-date with the ever-evolving tech landscape. I believe in writing maintainable code and creating experiences that users love.
+                  I also deliver AI chatbots and assistants, document and data processing pipelines, and content generation workflows. From PDF extraction and OCR to customer-support bots and marketing content systems, I focus on reliable execution, measurable outcomes, and maintainable architecture.
                 </motion.p>
               </div>
             </div>

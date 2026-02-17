@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node -e \"const fs=require('fs');const cp=require('child_process');const root=process.cwd().replace(/\\//g,'\\\\\\\\').toLowerCase();let procs=[];const out=cp.spawnSync('powershell',['-NoProfile','-Command','Get-CimInstance Win32_Process | Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress'],{encoding:'utf8'});if(out.status===0&&out.stdout&&out.stdout.trim()){try{const parsed=JSON.parse(out.stdout);procs=Array.isArray(parsed)?parsed:[parsed];}catch{}}const running=procs.some(p=>{const c=String((p&&p.CommandLine)||'').replace(/\\//g,'\\\\\\\\').toLowerCase();const isNextDev=c.includes('\\\\node_modules\\\\next\\\\dist\\\\bin\\\\next')&&c.includes(' dev');const isStartServer=c.includes('\\\\node_modules\\\\next\\\\dist\\\\server\\\\lib\\\\start-server.js');return c.includes(root)&&(isNextDev||isStartServer);});if(running){console.log('Next dev already running for this project. Open http://localhost:3000');process.exit(0);}const lock='.next/dev/lock';if(fs.existsSync(lock)){try{fs.rmSync(lock,{force:true});console.log('Removed stale .next/dev/lock');}catch(e){console.warn('Could not remove .next/dev/lock:',e.message);}}const nextBin=require.resolve('next/dist/bin/next');const child=cp.spawn(process.execPath,[nextBin,'dev'],{stdio:'inherit'});child.on('exit',code=>process.exit(code??0));\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

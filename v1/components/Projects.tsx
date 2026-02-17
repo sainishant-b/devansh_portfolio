@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Project } from "@/lib/projects";
-import { ChevronLeft, ChevronRight, X, Github, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Github } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
 interface ProjectsProps {
@@ -12,6 +12,7 @@ interface ProjectsProps {
 
 export default function Projects({ projects }: ProjectsProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const slideElementsRef = useRef<HTMLElement[]>([]);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -24,20 +25,22 @@ export default function Projects({ projects }: ProjectsProps) {
   const checkScrollability = useCallback(() => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      setCanScrollLeft(scrollLeft > 10);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+      const nextCanScrollLeft = scrollLeft > 10;
+      const nextCanScrollRight = scrollLeft < scrollWidth - clientWidth - 10;
+      setCanScrollLeft((prev) => (prev === nextCanScrollLeft ? prev : nextCanScrollLeft));
+      setCanScrollRight((prev) => (prev === nextCanScrollRight ? prev : nextCanScrollRight));
     }
   }, []);
 
-  const updateActiveSlide = useCallback(() => {
+  const refreshSlidesCache = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
-    const slides = Array.from(
+    slideElementsRef.current = Array.from(
       container.querySelectorAll<HTMLElement>('[data-slide-index]')
     );
-    if (slides.length === 0) return;
+  }, []);
 
+  const getClosestSlideIndex = useCallback((container: HTMLDivElement, slides: HTMLElement[]) => {
     const center = container.scrollLeft + container.clientWidth / 2;
     let closestIndex = 0;
     let closestDistance = Number.POSITIVE_INFINITY;
@@ -54,29 +57,43 @@ export default function Projects({ projects }: ProjectsProps) {
       }
     }
 
-    setActiveSlide((prev) => (prev === closestIndex ? prev : closestIndex));
+    return closestIndex;
   }, []);
+
+  const updateActiveSlide = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const slides = slideElementsRef.current;
+    if (slides.length === 0) return;
+
+    const closestIndex = getClosestSlideIndex(container, slides);
+    setActiveSlide((prev) => (prev === closestIndex ? prev : closestIndex));
+  }, [getClosestSlideIndex]);
 
   const scrollToSlide = useCallback((slideIndex: number) => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const clampedIndex = Math.max(0, Math.min(totalSlides - 1, slideIndex));
-    const slide = container.querySelector<HTMLElement>(`[data-slide-index="${clampedIndex}"]`);
+    const slide =
+      slideElementsRef.current[clampedIndex] ??
+      container.querySelector<HTMLElement>(`[data-slide-index="${clampedIndex}"]`);
     if (!slide) return;
 
     const centeredLeft = slide.offsetLeft - (container.clientWidth - slide.clientWidth) / 2;
     const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
     const targetLeft = Math.max(0, Math.min(centeredLeft, maxScrollLeft));
 
-    container.scrollTo({ left: targetLeft, behavior: 'smooth' });
-  }, [totalSlides]);
+    container.scrollTo({ left: targetLeft, behavior: shouldReduceMotion ? 'auto' : 'smooth' });
+  }, [shouldReduceMotion, totalSlides]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     let frame = 0;
+
     const handleScroll = () => {
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
@@ -87,12 +104,14 @@ export default function Projects({ projects }: ProjectsProps) {
     };
 
     const handleResize = () => {
+      refreshSlidesCache();
       checkScrollability();
       updateActiveSlide();
     };
 
     container.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize, { passive: true });
+    refreshSlidesCache();
     handleResize();
 
     return () => {
@@ -102,7 +121,32 @@ export default function Projects({ projects }: ProjectsProps) {
         window.cancelAnimationFrame(frame);
       }
     };
-  }, [checkScrollability, updateActiveSlide]);
+  }, [checkScrollability, updateActiveSlide, refreshSlidesCache]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey) return;
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+
+      const { scrollLeft, scrollWidth, clientWidth } = container;
+      const atStart = scrollLeft <= 1;
+      const atEnd = scrollLeft >= scrollWidth - clientWidth - 1;
+      if ((event.deltaY < 0 && atStart) || (event.deltaY > 0 && atEnd)) {
+        return;
+      }
+
+      event.preventDefault();
+      container.scrollBy({ left: event.deltaY });
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
 
   const scrollLeft = useCallback(() => {
     scrollToSlide(activeSlide - 1);
@@ -156,9 +200,12 @@ export default function Projects({ projects }: ProjectsProps) {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            style={{ fontFamily: "var(--font-gravitas-one)" }}
             className={`text-4xl md:text-5xl font-bold tracking-tight max-w-7xl mx-auto text-center ${isDark ? 'text-white' : 'text-gray-900'}`}
           >
-            Projects
+            <span className={`about-heading-aurora ${isDark ? "about-heading-aurora--dark" : "about-heading-aurora--light"}`}>
+              <span className="about-heading-aurora__text">Projects</span>
+            </span>
           </motion.h2>
           <motion.div 
             initial={{ scaleX: 0 }}
@@ -175,15 +222,18 @@ export default function Projects({ projects }: ProjectsProps) {
   }
 
   return (
-    <section className="min-h-screen w-full py-20 overflow-hidden">
+    <section className="min-h-screen w-full py-20 overflow-hidden" style={{ fontFamily: "var(--font-poppins)" }}>
       <div id="projects" className="px-5 md:px-10 mb-16">
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
+          style={{ fontFamily: "var(--font-gravitas-one)" }}
           className={`text-4xl md:text-5xl font-bold tracking-tight max-w-7xl mx-auto text-center ${isDark ? 'text-white' : 'text-gray-900'}`}
         >
-          Projects
+          <span className={`about-heading-aurora ${isDark ? "about-heading-aurora--dark" : "about-heading-aurora--light"}`}>
+            <span className="about-heading-aurora__text">Projects</span>
+          </span>
         </motion.h2>
         <motion.div 
           initial={{ scaleX: 0 }}
@@ -242,29 +292,29 @@ export default function Projects({ projects }: ProjectsProps) {
         {/* Horizontal Scroll Container */}
         <div 
           ref={scrollContainerRef}
-          className="flex gap-6 px-5 md:px-10 overflow-x-auto overflow-y-hidden pb-8 snap-x snap-mandatory"
+          className="flex gap-6 px-5 md:px-10 overflow-x-auto overflow-y-hidden pb-8 snap-x snap-mandatory scroll-smooth touch-pan-x"
           style={{ 
-            scrollBehavior: 'smooth',
-            scrollSnapType: 'x mandatory',
             overscrollBehaviorX: 'contain',
             WebkitOverflowScrolling: 'touch',
+            contain: 'layout paint style',
+            willChange: 'scroll-position',
             msOverflowStyle: 'none',
             scrollbarWidth: 'none'
           }}
         >
           {projects.map((project, index) => (
-            <motion.div
+            <div
               key={project.slug}
               data-slide-index={index}
               onClick={() => openProject(project)}
-              className="group/card relative flex-shrink-0 w-[85vw] md:w-[500px] h-[300px] md:h-[350px] rounded-2xl overflow-hidden snap-center transition-all duration-500 hover:scale-[1.02] cursor-pointer"
-              style={{ scrollSnapAlign: 'center' }}
+              className="group/card relative flex-shrink-0 w-[85vw] md:w-[500px] h-[300px] md:h-[350px] rounded-2xl overflow-hidden snap-center transition-all duration-500 hover:scale-[1.02] cursor-pointer transform-gpu will-change-transform"
+              style={{ scrollSnapAlign: 'center', contentVisibility: 'auto' }}
             >
               {/* Liquid Glass Card Background */}
-              <div className={`absolute inset-0 backdrop-blur-xl rounded-2xl transition-all duration-500 ${
+              <div className={`absolute inset-0 backdrop-blur-md md:backdrop-blur-xl rounded-2xl transition-all duration-500 ${
                 isDark 
-                ? 'bg-gradient-to-br from-white/[0.15] via-white/[0.05] to-transparent border border-white/[0.2] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),inset_0_-1px_1px_rgba(255,255,255,0.1),0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[inset_0_2px_2px_rgba(255,255,255,0.4),inset_0_-1px_1px_rgba(255,255,255,0.15),0_6px_30px_rgba(0,0,0,0.4),0_0_20px_rgba(255,255,255,0.1)]' 
-                : 'bg-white/40 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:bg-white/60'
+                ? 'card-surface-pulse bg-gradient-to-br from-white/[0.15] via-white/[0.05] to-transparent border border-white/[0.2] shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),inset_0_-1px_1px_rgba(255,255,255,0.1),0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[inset_0_2px_2px_rgba(255,255,255,0.4),inset_0_-1px_1px_rgba(255,255,255,0.15),0_6px_30px_rgba(0,0,0,0.4),0_0_20px_rgba(255,255,255,0.1)]' 
+                : 'card-surface-pulse bg-white/40 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)] hover:bg-white/60'
             }`} />
               
               {/* Inner gradient shine */}
@@ -272,6 +322,11 @@ export default function Projects({ projects }: ProjectsProps) {
                 isDark 
                 ? 'bg-gradient-to-br from-white/[0.05] via-transparent to-transparent' 
                 : 'bg-gradient-to-br from-white/40 via-white/10 to-transparent'
+              }`} />
+              <div className={`absolute inset-0 rounded-2xl pointer-events-none card-sheen-loop ${
+                isDark
+                  ? 'bg-gradient-to-r from-transparent via-white/[0.16] to-transparent'
+                  : 'bg-gradient-to-r from-transparent via-white/[0.38] to-transparent'
               }`} />
               
               {/* Background Image */}
@@ -292,22 +347,39 @@ export default function Projects({ projects }: ProjectsProps) {
               }`} />
               
               {/* Content */}
-              <div className="relative h-full p-8 flex flex-col justify-end">
-                <span className={`text-[10px] uppercase tracking-[0.2em] mb-2 ${isDark ? 'text-white/50' : 'text-gray-600'}`}>
+              <div className="relative h-full p-8 grid content-end grid-rows-[14px_minmax(2.75rem,auto)_minmax(2.75rem,auto)_minmax(2.25rem,auto)] gap-y-2">
+                <span className={`block w-full text-center text-[10px] uppercase tracking-[0.2em] leading-[14px] truncate ${isDark ? 'text-white/50' : 'text-gray-600'}`}>
                   {project.category}
                 </span>
-                <h3 className={`font-medium text-2xl md:text-3xl mb-3 tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  {project.title}
+                <h3 className={`w-full text-center font-medium text-2xl md:text-3xl tracking-tight leading-tight min-h-[2.75rem] md:min-h-[3.25rem] ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <span
+                    className="block overflow-hidden"
+                    style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                    }}
+                  >
+                    {project.title}
+                  </span>
                 </h3>
-                <p className={`text-sm leading-relaxed opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 transform translate-y-2 group-hover/card:translate-y-0 ${isDark ? 'text-white/60' : 'text-gray-800'}`}>
+                <p
+                  className={`text-sm leading-relaxed text-center min-h-[2.75rem] opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 ${isDark ? 'text-white/60' : 'text-gray-800'}`}
+                  style={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
                   {project.description}
                 </p>
                 
                 {/* Tags */}
                 {project.tags && project.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500">
+                  <div className="flex flex-wrap items-start justify-center gap-2 min-h-[2.25rem] opacity-90 group-hover/card:opacity-100 transition-opacity duration-300">
                     {project.tags.slice(0, 3).map((tag) => (
-                      <span key={tag} className={`text-[10px] px-2 py-1 rounded-full ${
+                      <span key={tag} className={`text-[10px] px-2 py-1 rounded-full card-chip-pulse ${
                         isDark 
                           ? 'bg-white/10 text-white/70' 
                           : 'bg-black/10 text-gray-800'
@@ -317,13 +389,14 @@ export default function Projects({ projects }: ProjectsProps) {
                     ))}
                   </div>
                 )}
+                {(!project.tags || project.tags.length === 0) && <div className="min-h-[2.25rem]" />}
               </div>
               
               {/* Liquid bottom line animation */}
               <div className={`absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent to-transparent transform scale-x-0 group-hover/card:scale-x-100 transition-transform duration-700 origin-center ${
                 isDark ? 'via-white/30' : 'via-black/30'
               }`} />
-            </motion.div>
+            </div>
           ))}
           
           {/* Project Coming Soon Title Card - At the End */}
@@ -333,14 +406,14 @@ export default function Projects({ projects }: ProjectsProps) {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0 }}
             viewport={{ once: true }}
-            className="group/card relative flex-shrink-0 w-[85vw] md:w-[500px] h-[300px] md:h-[350px] rounded-2xl overflow-hidden snap-center transition-all duration-500"
-            style={{ scrollSnapAlign: 'center' }}
+            className="group/card relative flex-shrink-0 w-[85vw] md:w-[500px] h-[300px] md:h-[350px] rounded-2xl overflow-hidden snap-center transition-all duration-500 transform-gpu will-change-transform"
+            style={{ scrollSnapAlign: 'center', contentVisibility: 'auto' }}
           >
             {/* Liquid Glass Card Background */}
-            <div className={`absolute inset-0 backdrop-blur-xl rounded-2xl transition-all duration-500 ${
+            <div className={`absolute inset-0 backdrop-blur-md md:backdrop-blur-xl rounded-2xl transition-all duration-500 ${
               isDark 
-                ? 'bg-white/[0.03] border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.36)] group-hover/card:border-white/[0.15] group-hover/card:shadow-[0_12px_40px_rgba(0,0,0,0.5)]' 
-                : 'bg-white/60 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.1)] group-hover/card:border-white/80 group-hover/card:shadow-[0_12px_40px_rgba(0,0,0,0.15)] group-hover/card:bg-white/70'
+                ? 'card-surface-pulse bg-white/[0.03] border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.36)] group-hover/card:border-white/[0.15] group-hover/card:shadow-[0_12px_40px_rgba(0,0,0,0.5)]' 
+                : 'card-surface-pulse bg-white/60 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.1)] group-hover/card:border-white/80 group-hover/card:shadow-[0_12px_40px_rgba(0,0,0,0.15)] group-hover/card:bg-white/70'
             }`} />
             
             {/* Inner gradient shine */}
@@ -348,6 +421,11 @@ export default function Projects({ projects }: ProjectsProps) {
               isDark 
                 ? 'bg-gradient-to-br from-white/[0.05] via-transparent to-transparent' 
                 : 'bg-gradient-to-br from-white/40 via-white/10 to-transparent'
+            }`} />
+            <div className={`absolute inset-0 rounded-2xl pointer-events-none card-sheen-loop ${
+              isDark
+                ? 'bg-gradient-to-r from-transparent via-white/[0.16] to-transparent'
+                : 'bg-gradient-to-r from-transparent via-white/[0.38] to-transparent'
             }`} />
             
             {/* Animated gradient background */}
@@ -419,27 +497,6 @@ export default function Projects({ projects }: ProjectsProps) {
           <div className="flex-shrink-0 w-5 md:w-20" />
         </div>
 
-        {/* Scroll Indicator / Slider Controls */}
-        <div className="flex justify-center gap-2 mt-4" role="group" aria-label="Project carousel slider">
-          {Array.from({ length: totalSlides }).map((_, index) => {
-            const isActive = index === activeSlide;
-
-            return (
-              <button
-                key={index}
-                type="button"
-                onClick={() => scrollToSlide(index)}
-                aria-label={`Go to project slide ${index + 1}`}
-                aria-pressed={isActive}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  isActive
-                    ? `w-10 ${isDark ? 'bg-white/80' : 'bg-black/70'}`
-                    : `w-5 ${isDark ? 'bg-white/20 hover:bg-white/35' : 'bg-black/20 hover:bg-black/35'}`
-                }`}
-              />
-            );
-          })}
-        </div>
       </div>
 
       {/* Project Modal */}
@@ -559,23 +616,6 @@ export default function Projects({ projects }: ProjectsProps) {
                   </p>
 
                   <div className="flex flex-col gap-4 mt-auto">
-                    {/* View Project Button */}
-                    {selectedProject.link && (
-                      <a
-                        href={selectedProject.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`group flex items-center justify-center gap-3 w-full py-4 rounded-xl font-bold transition-all duration-300 ${
-                          isDark
-                            ? 'bg-white text-black hover:bg-gray-200'
-                            : 'bg-black text-white hover:bg-gray-800'
-                        }`}
-                      >
-                        <span>View Live Project</span>
-                        <ExternalLink size={18} className="group-hover:translate-x-1 transition-transform" />
-                      </a>
-                    )}
-
                     {/* GitHub Button */}
                     {selectedProject.github && (
                       <a

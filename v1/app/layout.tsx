@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Gravitas_One, Inter, Poppins, Syne } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ParticleGrid from "@/components/ParticleGrid";
@@ -10,6 +10,21 @@ import ThemeWrapper from "@/components/ThemeWrapper";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+const gravitasOne = Gravitas_One({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-gravitas-one",
+});
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-poppins",
+});
+const syne = Syne({
+  subsets: ["latin"],
+  weight: ["700", "800"],
+  variable: "--font-syne",
 });
 
 export const metadata: Metadata = {
@@ -32,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} font-sans antialiased relative overflow-x-hidden`}
+        className={`${inter.variable} ${gravitasOne.variable} ${poppins.variable} ${syne.variable} font-sans antialiased relative overflow-x-hidden`}
         suppressHydrationWarning
       >
         <style dangerouslySetInnerHTML={{ __html: `
