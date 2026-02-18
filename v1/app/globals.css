@@ -270,29 +270,21 @@ html {
 .about-heading-aurora__text {
   position: relative;
   z-index: 3;
-  color: transparent;
-  background-image: linear-gradient(
-    120deg,
-    var(--about-clr-1) 0%,
-    var(--about-clr-2) 24%,
-    var(--about-clr-3) 52%,
-    var(--about-clr-4) 78%,
-    var(--about-clr-1) 100%
-  );
-  background-size: 220% 220%;
-  background-position: 0% 50%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: about-aurora-text-flow 9s ease-in-out infinite;
+  color: inherit;
+  background-image: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+  animation: none;
 }
 
 .about-heading-aurora--dark .about-heading-aurora__text {
   text-shadow: none;
+  filter: none;
 }
 
 .about-heading-aurora--light .about-heading-aurora__text {
-  filter: saturate(0.88) contrast(1.04);
+  filter: none;
 }
 
 @keyframes about-aurora-text-flow {

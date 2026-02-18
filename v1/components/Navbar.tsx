@@ -190,10 +190,14 @@ export default function Navbar() {
             <motion.a
               href={contactLink.href}
               onClick={(e) => handleNavClick(e, contactLink.href)}
-              className={`hidden md:inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold tracking-wider rounded-full backdrop-blur-xl bg-black border border-red-500/28 hover:border-red-400/40 transition-all duration-300 ${
+              className={`hidden md:inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold tracking-wider rounded-full backdrop-blur-xl transition-all duration-300 ${
                 activeSection === contactLink.href.slice(1)
-                  ? 'text-red-400 border-red-400/45'
-                  : 'text-red-500 hover:text-red-400'
+                  ? isDark
+                    ? 'text-white bg-white/[0.18] border border-white/[0.28]'
+                    : 'text-black bg-black/[0.08] border border-black/[0.18]'
+                  : isDark
+                    ? 'text-white/80 bg-white/[0.1] border border-white/[0.2] hover:text-white hover:bg-white/[0.14] hover:border-white/[0.3]'
+                    : 'text-black/70 bg-white/70 border border-black/[0.14] hover:text-black hover:bg-white/90 hover:border-black/[0.2]'
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
