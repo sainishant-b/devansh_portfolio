@@ -203,9 +203,19 @@ export default function ContactMe() {
 function HolographicProjector({ isDark }: { isDark: boolean }) {
   const [isProjecting, setIsProjecting] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [particles, setParticles] = useState<{ id: number; x: number; delay: number; duration: number; size: number }[]>([]);
 
   useEffect(() => {
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    // Generate static random particles so they don't cause hydration mismatch
+    const newParticles = Array.from({ length: 30 }).map((_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 1.5 + Math.random() * 2,
+      size: 1 + Math.random() * 3,
+    }));
+    setParticles(newParticles);
   }, []);
 
   return (
@@ -218,141 +228,200 @@ function HolographicProjector({ isDark }: { isDark: boolean }) {
       onMouseLeave={() => { if (!isTouchDevice) setIsProjecting(false); }}
       onFocusCapture={() => setIsProjecting(true)}
       onBlurCapture={() => setIsProjecting(false)}
-      className="relative mx-auto w-[min(760px,97vw)] h-[320px] sm:h-[360px] select-none"
+      className="relative mx-auto w-[min(760px,97vw)] h-[380px] sm:h-[420px] select-none"
     >
       {/* Status indicator */}
       <motion.div
-        className={`absolute top-2 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[10px] tracking-[0.2em] uppercase border ${
+        className={`absolute top-0 left-1/2 -translate-x-1/2 rounded-full px-4 py-1 text-[10px] tracking-[0.2em] uppercase border backdrop-blur-md ${
           isDark
-            ? 'border-cyan-200/30 bg-cyan-400/10 text-cyan-100/90'
-            : 'border-cyan-700/20 bg-cyan-500/10 text-cyan-800/80'
+            ? 'border-cyan-200/40 bg-cyan-400/10 text-cyan-100/90 shadow-[0_0_15px_rgba(34,211,238,0.2)]'
+            : 'border-cyan-700/30 bg-cyan-500/10 text-cyan-800/80 shadow-[0_0_15px_rgba(8,145,178,0.2)]'
         }`}
         animate={{
           opacity: isProjecting ? [0.72, 1, 0.82] : 0.62,
+          boxShadow: isProjecting 
+            ? (isDark ? ["0 0 15px rgba(34,211,238,0.2)", "0 0 25px rgba(34,211,238,0.5)", "0 0 15px rgba(34,211,238,0.2)"] : ["0 0 15px rgba(8,145,178,0.2)", "0 0 25px rgba(8,145,178,0.5)", "0 0 15px rgba(8,145,178,0.2)"])
+            : "0 0 15px transparent"
         }}
         transition={{ duration: 1.1, repeat: isProjecting ? Infinity : 0 }}
       >
-        {isTouchDevice ? (isProjecting ? "Tap base to hide" : "Tap base to reveal") : (isProjecting ? "Projector Online" : "Hover to activate")}
+        {isTouchDevice ? (isProjecting ? "Tap base to hide" : "Tap base to reveal") : (isProjecting ? "Data Stream Active" : "Hover to activate")}
       </motion.div>
 
       {/* Floor reflection */}
       <motion.div
         className={`absolute bottom-3 left-1/2 h-14 w-[330px] md:w-[420px] -translate-x-1/2 rounded-full blur-2xl ${
-          isDark ? 'bg-cyan-400/30' : 'bg-cyan-500/20'
+          isDark ? 'bg-cyan-400/40' : 'bg-cyan-500/30'
         }`}
         animate={{
-          opacity: isProjecting ? 0.7 : 0.28,
-          scale: isProjecting ? 1.15 : 1,
+          opacity: isProjecting ? 0.85 : 0.3,
+          scale: isProjecting ? 1.25 : 1,
         }}
-        transition={{ duration: 0.28, ease: "easeOut" }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
       />
 
       {/* Ambient hologram aura */}
       <motion.div
-        className="absolute left-1/2 bottom-[92px] h-[180px] w-[320px] md:w-[420px] -translate-x-1/2 rounded-full pointer-events-none blur-3xl"
+        className="absolute left-1/2 bottom-[92px] h-[220px] w-[320px] md:w-[460px] -translate-x-1/2 rounded-full pointer-events-none blur-[40px]"
         style={{
           background: isDark
-            ? "radial-gradient(circle at 50% 60%, rgba(56,189,248,0.42) 0%, rgba(34,211,238,0.18) 45%, rgba(34,211,238,0) 80%)"
-            : "radial-gradient(circle at 50% 60%, rgba(8,145,178,0.32) 0%, rgba(6,182,212,0.12) 45%, rgba(6,182,212,0) 80%)",
+            ? "radial-gradient(circle at 50% 60%, rgba(56,189,248,0.5) 0%, rgba(34,211,238,0.25) 45%, rgba(34,211,238,0) 80%)"
+            : "radial-gradient(circle at 50% 60%, rgba(8,145,178,0.4) 0%, rgba(6,182,212,0.15) 45%, rgba(6,182,212,0) 80%)",
         }}
         animate={{
-          opacity: isProjecting ? [0.25, 0.68, 0.34] : 0.12,
-          scale: isProjecting ? [0.94, 1.06, 0.98] : 0.9,
+          opacity: isProjecting ? [0.35, 0.75, 0.45] : 0.15,
+          scale: isProjecting ? [0.94, 1.1, 0.98] : 0.9,
         }}
         transition={{ duration: 2.2, repeat: isProjecting ? Infinity : 0, ease: "easeInOut" }}
       />
 
-      {/* Orbital hologram ring */}
+      {/* 3D Core / Orbital hologram rings */}
       <motion.div
-        className={`absolute bottom-[122px] left-1/2 h-24 w-24 -translate-x-1/2 rounded-full border pointer-events-none ${
-          isDark ? 'border-cyan-200/40' : 'border-cyan-700/25'
-        }`}
-        animate={
-          isProjecting
-            ? {
-                rotate: [0, 360],
-                opacity: [0.2, 0.8, 0.3],
-                scale: [0.92, 1.06, 0.95],
-              }
-            : { rotate: 0, opacity: 0, scale: 0.9 }
-        }
-        transition={{ duration: 2.6, repeat: isProjecting ? Infinity : 0, ease: "linear" }}
-      />
-      <motion.div
-        className={`absolute bottom-[116px] left-1/2 h-36 w-36 -translate-x-1/2 rounded-full border border-dashed pointer-events-none ${
-          isDark ? 'border-cyan-200/25' : 'border-cyan-700/20'
-        }`}
-        animate={
-          isProjecting
-            ? {
-                rotate: [360, 0],
-                opacity: [0.14, 0.44, 0.2],
-                scale: [0.96, 1.1, 0.98],
-              }
-            : { rotate: 0, opacity: 0, scale: 0.9 }
-        }
-        transition={{ duration: 3.4, repeat: isProjecting ? Infinity : 0, ease: "linear" }}
-      />
+        className="absolute bottom-[116px] left-1/2 w-32 h-32 -translate-x-1/2 pointer-events-none"
+        style={{ perspective: "600px" }}
+      >
+        <motion.div
+          className={`absolute inset-0 rounded-full border-[2px] ${isDark ? 'border-cyan-300/60' : 'border-cyan-600/40'}`}
+          animate={isProjecting ? { rotateX: [0, 360], rotateY: [0, 180], opacity: [0.3, 0.9, 0.3] } : { rotateX: 60, opacity: 0 }}
+          transition={{ duration: 4, repeat: isProjecting ? Infinity : 0, ease: "linear" }}
+        />
+        <motion.div
+          className={`absolute inset-[-10px] rounded-full border border-dashed ${isDark ? 'border-cyan-200/50' : 'border-cyan-700/30'}`}
+          animate={isProjecting ? { rotateY: [0, -360], rotateZ: [0, 90], opacity: [0.2, 0.6, 0.2] } : { rotateX: 70, opacity: 0 }}
+          transition={{ duration: 5, repeat: isProjecting ? Infinity : 0, ease: "linear" }}
+        />
+        <motion.div
+          className={`absolute inset-[15px] rounded-full border-[3px] border-dotted ${isDark ? 'border-sky-300/70' : 'border-sky-600/50'}`}
+          animate={isProjecting ? { rotateZ: [0, 360], rotateX: [0, -180], opacity: [0.4, 1, 0.4] } : { rotateX: 50, opacity: 0 }}
+          transition={{ duration: 3.5, repeat: isProjecting ? Infinity : 0, ease: "linear" }}
+        />
+      </motion.div>
 
-      {/* Emission pulse from projector lens */}
+      {/* Hologram beam base core pulse */}
       <motion.div
-        className={`absolute bottom-[82px] left-1/2 h-20 w-20 -translate-x-1/2 rounded-full border pointer-events-none ${
-          isDark ? 'border-cyan-200/45' : 'border-cyan-700/30'
+        className={`absolute bottom-[80px] left-1/2 h-24 w-24 -translate-x-1/2 rounded-full pointer-events-none ${
+          isDark ? 'bg-cyan-300/20' : 'bg-cyan-600/15'
         }`}
+        style={{ filter: "blur(10px)" }}
         animate={
           isProjecting
-            ? { opacity: [0.7, 0, 0], scale: [0.4, 1.55, 1.8] }
+            ? { opacity: [0.4, 0.8, 0.4], scale: [0.8, 1.4, 0.8] }
             : { opacity: 0, scale: 0.4 }
         }
-        transition={{ duration: 1.1, repeat: isProjecting ? Infinity : 0, ease: "easeOut" }}
+        transition={{ duration: 1.5, repeat: isProjecting ? Infinity : 0, ease: "easeInOut" }}
+      />
+      
+      {/* Additional Emission ring */}
+      <motion.div
+        className={`absolute bottom-[82px] left-1/2 h-20 w-20 -translate-x-1/2 rounded-full border pointer-events-none ${
+          isDark ? 'border-cyan-100/60' : 'border-cyan-600/40'
+        }`}
+        animate={
+          isProjecting
+            ? { opacity: [0.9, 0, 0], scale: [0.4, 2, 2.5] }
+            : { opacity: 0, scale: 0.4 }
+        }
+        transition={{ duration: 1.2, repeat: isProjecting ? Infinity : 0, ease: "easeOut" }}
       />
 
-      {/* Hologram beam */}
+      {/* Glowing Vertical Column Core */}
       <motion.div
-        className="absolute bottom-16 left-1/2 h-[170px] w-[230px] -translate-x-1/2 pointer-events-none"
+        className="absolute bottom-16 left-1/2 w-[60px] h-[220px] -translate-x-1/2 pointer-events-none blur-[15px]"
         style={{
-          clipPath: "polygon(46% 0%, 54% 0%, 100% 100%, 0% 100%)",
           background: isDark
-            ? "linear-gradient(180deg, rgba(56,189,248,0.5) 0%, rgba(34,211,238,0.18) 45%, rgba(56,189,248,0.02) 100%)"
-            : "linear-gradient(180deg, rgba(8,145,178,0.35) 0%, rgba(6,182,212,0.12) 45%, rgba(8,145,178,0.02) 100%)",
-          filter: "blur(1px)",
+            ? "linear-gradient(to top, rgba(34,211,238,0.6) 0%, rgba(56,189,248,0.2) 60%, transparent 100%)"
+            : "linear-gradient(to top, rgba(8,145,178,0.4) 0%, rgba(6,182,212,0.1) 60%, transparent 100%)",
+        }}
+        animate={{ opacity: isProjecting ? [0.4, 0.8, 0.4] : 0, scaleY: isProjecting ? 1 : 0 }}
+        transition={{ duration: 2, repeat: isProjecting ? Infinity : 0 }}
+      />
+
+      {/* Main Hologram beam (trapezoid) */}
+      <motion.div
+        className="absolute bottom-16 left-1/2 h-[220px] w-[280px] -translate-x-1/2 pointer-events-none overflow-hidden"
+        style={{
+          clipPath: "polygon(42% 0%, 58% 0%, 100% 100%, 0% 100%)",
+          background: isDark
+            ? "linear-gradient(180deg, rgba(56,189,248,0.6) 0%, rgba(34,211,238,0.22) 45%, rgba(56,189,248,0.02) 100%)"
+            : "linear-gradient(180deg, rgba(8,145,178,0.45) 0%, rgba(6,182,212,0.15) 45%, rgba(8,145,178,0.02) 100%)",
+          filter: "blur(0.5px)",
+          transformOrigin: "bottom"
         }}
         animate={{
           opacity: isProjecting ? 1 : 0,
           scaleY: isProjecting ? 1 : 0.62,
         }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        >
-          <motion.div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: "repeating-linear-gradient(to bottom, rgba(255,255,255,0.38) 0px, rgba(255,255,255,0.38) 1px, transparent 3px, transparent 6px)",
-              mixBlendMode: "screen",
-            }}
-            animate={isProjecting ? { backgroundPositionY: ["0px", "18px"] } : { backgroundPositionY: "0px" }}
-            transition={{ duration: 0.22, repeat: isProjecting ? Infinity : 0, ease: "linear" }}
-          />
+        transition={{ duration: 0.35, ease: "easeOut" }}
+      >
+        {/* Beam internal textures */}
         <motion.div
-          className="absolute left-1/2 top-0 h-full w-[3px] -translate-x-1/2"
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "repeating-linear-gradient(to bottom, rgba(255,255,255,0.45) 0px, rgba(255,255,255,0.45) 1px, transparent 4px, transparent 8px)",
+            mixBlendMode: "screen",
+          }}
+          animate={isProjecting ? { backgroundPositionY: ["0px", "24px"] } : { backgroundPositionY: "0px" }}
+          transition={{ duration: 0.3, repeat: isProjecting ? Infinity : 0, ease: "linear" }}
+        />
+        
+        {/* Scanning Laser Line */}
+        <motion.div
+          className={`absolute left-0 right-0 h-[2px] blur-[1px] ${
+            isDark ? 'bg-cyan-200' : 'bg-cyan-600'
+          }`}
+          style={{ boxShadow: isDark ? "0 0 10px 2px rgba(165,243,252,0.8)" : "0 0 10px 2px rgba(8,145,178,0.8)" }}
+          animate={isProjecting ? { top: ["0%", "100%", "0%"] } : { top: "100%" }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        />
+
+        {/* Floating Data Particles */}
+        {particles.map(p => (
+          <motion.div
+            key={p.id}
+            className={`absolute rounded-full ${isDark ? 'bg-cyan-200/80 shadow-[0_0_4px_rgba(165,243,252,1)]' : 'bg-cyan-600/70 shadow-[0_0_4px_rgba(8,145,178,1)]'}`}
+            style={{ 
+              width: p.size, 
+              height: p.size, 
+              left: `${p.x}%`,
+              bottom: "0%"
+            }}
+            animate={isProjecting ? { 
+              bottom: ["0%", "100%"],
+              opacity: [0, 1, 0],
+              x: [0, Math.random() * 20 - 10, 0] // sway
+            } : { bottom: "0%", opacity: 0 }}
+            transition={{ 
+              duration: p.duration, 
+              repeat: Infinity, 
+              delay: p.delay,
+              ease: "linear"
+            }}
+          />
+        ))}
+
+        {/* Central bright core line */}
+        <motion.div
+          className="absolute left-1/2 top-0 h-full w-[4px] -translate-x-1/2"
           style={{
             background: isDark
-              ? "linear-gradient(180deg, rgba(186,230,253,0.9) 0%, rgba(56,189,248,0.48) 55%, rgba(56,189,248,0.02) 100%)"
-              : "linear-gradient(180deg, rgba(14,116,144,0.75) 0%, rgba(6,182,212,0.32) 55%, rgba(6,182,212,0.02) 100%)",
-            filter: "blur(0.4px)",
+              ? "linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(186,230,253,0.8) 20%, rgba(56,189,248,0.5) 60%, rgba(56,189,248,0) 100%)"
+              : "linear-gradient(180deg, rgba(255,255,255,0.8) 0%, rgba(14,116,144,0.7) 20%, rgba(6,182,212,0.4) 60%, rgba(6,182,212,0) 100%)",
+            filter: "blur(1px)",
           }}
-          animate={isProjecting ? { opacity: [0.45, 0.9, 0.55] } : { opacity: 0 }}
-          transition={{ duration: 0.5, repeat: isProjecting ? Infinity : 0, ease: "easeInOut" }}
+          animate={isProjecting ? { opacity: [0.6, 1, 0.7] } : { opacity: 0 }}
+          transition={{ duration: 0.4, repeat: isProjecting ? Infinity : 0, ease: "easeInOut" }}
         />
       </motion.div>
 
       {/* Hologram nodes */}
       <motion.div
-        className="absolute left-1/2 bottom-[128px] -translate-x-1/2 flex items-end justify-center gap-3 sm:gap-5 md:gap-7"
+        className="absolute left-1/2 bottom-[165px] -translate-x-1/2 flex items-end justify-center gap-3 sm:gap-5 md:gap-7"
         animate={{
           opacity: isProjecting ? 1 : 0,
-          y: isProjecting ? 0 : 20,
+          y: isProjecting ? 0 : 30,
+          scale: isProjecting ? 1 : 0.8,
         }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
+        transition={{ duration: 0.35, ease: "easeOut", type: "spring", bounce: 0.4 }}
       >
         {projectorContacts.map((contact, index) => (
           <HologramContactNode
@@ -371,39 +440,49 @@ function HolographicProjector({ isDark }: { isDark: boolean }) {
         aria-label="Toggle contact projector"
         aria-pressed={isProjecting}
         onClick={() => setIsProjecting((prev) => !prev)}
-        className="group/projector absolute bottom-0 left-1/2 h-[98px] w-[min(330px,90vw)] md:w-[410px] -translate-x-1/2 rounded-[36px] focus:outline-none focus-visible:outline-none"
+        className="group/projector absolute bottom-0 left-1/2 h-[98px] w-[min(340px,92vw)] md:w-[440px] -translate-x-1/2 rounded-[36px] focus:outline-none focus-visible:outline-none"
       >
+        {/* 3D Base Body */}
         <div
-          className={`absolute inset-0 rounded-[36px] border backdrop-blur-xl ${
+          className={`absolute inset-0 rounded-[36px] border-[1.5px] backdrop-blur-2xl ${
             isDark
-              ? 'border-white/20 bg-gradient-to-b from-white/[0.2] via-white/[0.08] to-white/[0.02] shadow-[0_28px_60px_rgba(0,0,0,0.55)]'
-              : 'border-black/15 bg-gradient-to-b from-white/90 via-white/70 to-white/45 shadow-[0_18px_44px_rgba(0,0,0,0.22)]'
+              ? 'border-cyan-300/30 bg-gradient-to-b from-cyan-950/60 via-slate-900/40 to-black/80 shadow-[0_30px_70px_rgba(8,145,178,0.35)]'
+              : 'border-cyan-700/20 bg-gradient-to-b from-cyan-50/90 via-white/80 to-slate-200/60 shadow-[0_20px_50px_rgba(34,211,238,0.25)]'
           }`}
-          style={{ transform: "perspective(1200px) rotateX(58deg)", transformOrigin: "center bottom" }}
-        />
+          style={{ transform: "perspective(1200px) rotateX(62deg)", transformOrigin: "center bottom" }}
+        >
+           {/* Internal lit ring */}
+           <motion.div 
+             className={`absolute inset-2 rounded-[28px] border ${isDark ? 'border-cyan-400/20' : 'border-cyan-600/15'}`}
+             animate={{ opacity: isProjecting ? [0.3, 0.7, 0.3] : 0.2 }}
+             transition={{ duration: 2, repeat: Infinity }}
+           />
+        </div>
+        
+        {/* Base emission line */}
         <motion.div
-          className={`absolute inset-x-10 top-[26px] h-px pointer-events-none ${
-            isDark ? 'bg-cyan-100/55' : 'bg-cyan-700/45'
+          className={`absolute inset-x-10 top-[26px] h-[2px] pointer-events-none blur-[1px] ${
+            isDark ? 'bg-cyan-300/80 shadow-[0_0_8px_rgba(103,232,249,0.8)]' : 'bg-cyan-600/80 shadow-[0_0_8px_rgba(8,145,178,0.8)]'
           }`}
-          animate={isProjecting ? { opacity: [0.2, 0.85, 0.35], scaleX: [0.86, 1.05, 0.92] } : { opacity: 0.22, scaleX: 0.9 }}
-          transition={{ duration: 1, repeat: isProjecting ? Infinity : 0, ease: "easeInOut" }}
+          animate={isProjecting ? { opacity: [0.4, 1, 0.5], scaleX: [0.86, 1.05, 0.92] } : { opacity: 0.2, scaleX: 0.9 }}
+          transition={{ duration: 1.2, repeat: isProjecting ? Infinity : 0, ease: "easeInOut" }}
         />
 
+        {/* Projector Lens / Source */}
         <motion.div
-          className={`absolute left-1/2 top-[42px] h-7 w-16 -translate-x-1/2 rounded-full border ${
-            isDark ? 'border-cyan-200/50 bg-cyan-300/30' : 'border-cyan-700/35 bg-cyan-500/30'
+          className={`absolute left-1/2 top-[42px] h-8 w-20 -translate-x-1/2 rounded-[100%] border-2 ${
+            isDark ? 'border-cyan-200/70 bg-cyan-400/40' : 'border-cyan-700/50 bg-cyan-500/40'
           }`}
           animate={{
-            opacity: isProjecting ? [0.45, 0.95, 0.55] : 0.35,
+            opacity: isProjecting ? [0.6, 1, 0.7] : 0.4,
             boxShadow: isProjecting
-              ? [
-                  "0 0 0 0 rgba(34,211,238,0.24)",
-                  "0 0 20px 3px rgba(34,211,238,0.42)",
-                  "0 0 6px 1px rgba(34,211,238,0.2)",
-                ]
-              : "0 0 0 0 rgba(34,211,238,0)",
+              ? (isDark 
+                  ? ["0 0 10px rgba(34,211,238,0.4), inset 0 0 10px rgba(255,255,255,0.6)", "0 0 30px rgba(34,211,238,0.8), inset 0 0 15px rgba(255,255,255,0.9)", "0 0 10px rgba(34,211,238,0.4), inset 0 0 10px rgba(255,255,255,0.6)"]
+                  : ["0 0 10px rgba(8,145,178,0.4), inset 0 0 10px rgba(255,255,255,0.6)", "0 0 30px rgba(8,145,178,0.7), inset 0 0 15px rgba(255,255,255,0.9)", "0 0 10px rgba(8,145,178,0.4), inset 0 0 10px rgba(255,255,255,0.6)"])
+              : "0 0 0 transparent",
+            scale: isProjecting ? [0.95, 1.05, 0.95] : 1
           }}
-          transition={{ duration: 1.3, repeat: isProjecting ? Infinity : 0 }}
+          transition={{ duration: 0.8, repeat: isProjecting ? Infinity : 0, ease: "easeInOut" }}
         />
 
         <span className="sr-only">
